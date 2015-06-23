@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: درگاه پرداخت پی لاین افزونه ووکامرس
-Version: 4.0.0
+Version: 4.0.1
 Description: پرداخت وجه محصولات ووکامرس به وسیله درگاه پرداخت پی لاین
 Plugin URI: http://woocommerce.ir/
 Author: ووکامرس فارسی

@@ -141,6 +141,7 @@ function Load_PayLine_Gateway() {
 			}
 
 			public function Send_to_PayLine_Gateway_By_HANNANStd($order_id){
+				ob_start();
 				global $woocommerce;
 				$woocommerce->session->order_id_payline = $order_id;
 				$order = new WC_Order( $order_id );
@@ -168,6 +169,7 @@ function Load_PayLine_Gateway() {
 					}
 					
 					$Amount = intval($order->order_total);
+					$Amount = apply_filters( 'woocommerce_order_amount_total_IRANIAN_gateways_before_check_currency', $Amount, $currency );
 					if ( strtolower($currency) == strtolower('IRT') || strtolower($currency) == strtolower('TOMAN')
 						|| strtolower($currency) == strtolower('Iran TOMAN') || strtolower($currency) == strtolower('Iranian TOMAN')
 						|| strtolower($currency) == strtolower('Iran-TOMAN') || strtolower($currency) == strtolower('Iranian-TOMAN')
@@ -175,9 +177,15 @@ function Load_PayLine_Gateway() {
 						|| strtolower($currency) == strtolower('تومان') || strtolower($currency) == strtolower('تومان ایران')
 					)
 						$Amount = $Amount*10;
-			
-			
-			
+					else if ( strtolower($currency) == strtolower('IRHT') )							
+						$Amount = $Amount*1000*10;
+					else if ( strtolower($currency) == strtolower('IRHR') )							
+						$Amount = $Amount*1000;
+					
+					$Amount = apply_filters( 'woocommerce_order_amount_total_IRANIAN_gateways_after_check_currency', $Amount, $currency );
+					$Amount = apply_filters( 'woocommerce_order_amount_total_IRANIAN_gateways_irr', $Amount, $currency );
+					$Amount = apply_filters( 'woocommerce_order_amount_total_PayLine_gateway', $Amount, $currency );
+						
 					$Description = 'خرید به شماره سفارش : '.$order->get_order_number();
 					$Email = $order->billing_email;
 					$Email = $Email ? $Email : '-';
@@ -215,13 +223,19 @@ function Load_PayLine_Gateway() {
 					curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 					$result = curl_exec($ch);
 					if (is_numeric($result) and $result > 0) {
-						
-		
 						do_action( 'WC_PayLine_Before_Send_to_Gateway', $order_id );
-			
-						header('Location: '.sprintf($send, $result));
-						exit;
-						
+						ob_start();
+						if (!headers_sent()) {
+							header('Location: '.sprintf($send, $result));
+							ob_end_clean();
+							ob_end_flush();
+							exit;
+						}
+						else {
+							$redirect_page = sprintf($send, $result);
+							echo "<script type='text/javascript'>window.onload = function () { top.location.href = '" . $redirect_page . "'; };</script>";
+							exit;
+						};
 					}
 					else {
 						
@@ -260,7 +274,8 @@ function Load_PayLine_Gateway() {
 						
 					if($order->status !='completed'){
 		
-						$Amount = intval($order->order_total);				
+						$Amount = intval($order->order_total);
+						$Amount = apply_filters( 'woocommerce_order_amount_total_IRANIAN_gateways_before_check_currency', $Amount, $currency );
 						if ( strtolower($currency) == strtolower('IRT') || strtolower($currency) == strtolower('TOMAN')
 							|| strtolower($currency) == strtolower('Iran TOMAN') || strtolower($currency) == strtolower('Iranian TOMAN')
 							|| strtolower($currency) == strtolower('Iran-TOMAN') || strtolower($currency) == strtolower('Iranian-TOMAN')
@@ -268,8 +283,14 @@ function Load_PayLine_Gateway() {
 							|| strtolower($currency) == strtolower('تومان') || strtolower($currency) == strtolower('تومان ایران')
 						)
 							$Amount = $Amount*10;
-							
-							
+						else if ( strtolower($currency) == strtolower('IRHT') )							
+							$Amount = $Amount*1000*10;
+						else if ( strtolower($currency) == strtolower('IRHR') )							
+							$Amount = $Amount*1000;
+					
+						$Amount = apply_filters( 'woocommerce_order_amount_total_IRANIAN_gateways_after_check_currency', $Amount, $currency );
+						$Amount = apply_filters( 'woocommerce_order_amount_total_IRANIAN_gateways_irr', $Amount, $currency );
+						$Amount = apply_filters( 'woocommerce_order_amount_total_PayLine_gateway', $Amount, $currency );
 						
 						$Sandbox = $this->sandbox;
 					
@@ -306,7 +327,6 @@ function Load_PayLine_Gateway() {
 							$transaction_id = $trans_id;
 							$fault = 0;
 						}
-						
 						
 						
 						
